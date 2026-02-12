@@ -1,65 +1,95 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { PromptForm } from "@/components";
+import { DomainList } from "@/components";
+import { generateDomains } from "@/lib/gpt";
+import { checkDomains } from "@/lib/rdap";
+import type { DomainResult } from "@/lib/rdap";
 
 export default function Home() {
+  const [prompt, setPrompt] = useState("");
+  const [results, setResults] = useState<DomainResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+
+  async function handleSubmit() {
+    setLoading(true);
+    setResults([]);
+    setError("");
+
+    try {
+      setStatus("Domain isimleri üretiliyor...");
+      const domains = await generateDomains(prompt);
+
+      setStatus(`${domains.length} domain kontrol ediliyor...`);
+      const checked = await checkDomains(domains);
+
+      setResults(checked);
+      setStatus("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu.");
+      setStatus("");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const availableCount = results.filter((r) => r.available).length;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="max-w-2xl mx-auto px-4 py-16">
+      {/* Hero */}
+      <div className="text-center mb-10 animate-fade-in">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-indigo-500 via-violet-500 to-pink-500 bg-clip-text text-transparent">
+          AI Domain Finder
+        </h1>
+        <p className="text-slate-500 text-lg">
+          İşinizi tanımlayın, size uygun domain isimlerini bulalım.
+        </p>
+      </div>
+
+      {/* Form Card */}
+      <div className="bg-white rounded-2xl shadow-lg shadow-indigo-500/5 border border-slate-200/60 p-6 mb-6 animate-slide-up">
+        <PromptForm
+          value={prompt}
+          onChange={setPrompt}
+          onSubmit={handleSubmit}
+          loading={loading}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      </div>
+
+      {/* Status */}
+      {status && (
+        <div className="flex items-center gap-2 justify-center py-3 animate-fade-in">
+          <svg className="w-4 h-4 animate-spin text-indigo-500" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="text-sm text-slate-500">{status}</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm mb-6 animate-fade-in">
+          {error}
         </div>
-      </main>
-    </div>
+      )}
+
+      {/* Results Summary */}
+      {results.length > 0 && (
+        <div className="flex items-center gap-3 mb-4 animate-fade-in">
+          <h2 className="text-xl font-semibold text-slate-800">Sonuçlar</h2>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700">
+            {availableCount}/{results.length} kullanılabilir
+          </span>
+        </div>
+      )}
+
+      {/* Domain List */}
+      <DomainList results={results} />
+    </main>
   );
 }
