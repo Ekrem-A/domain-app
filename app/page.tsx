@@ -5,7 +5,7 @@ import { PromptForm } from "@/components";
 import { DomainList } from "@/components";
 import { generateDomains } from "@/lib/gpt";
 import { checkDomains } from "@/lib/rdap";
-import type { DomainResult } from "@/lib/rdap";
+import type { DomainResult, DomainSuggestion } from "@/lib/types";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -21,12 +21,19 @@ export default function Home() {
 
     try {
       setStatus("Domain isimleri üretiliyor...");
-      const domains = await generateDomains(prompt);
+      const suggestions = await generateDomains(prompt);
 
-      setStatus(`${domains.length} domain kontrol ediliyor...`);
-      const checked = await checkDomains(domains);
+      const domainNames = suggestions.map((s) => s.domain);
+      setStatus(`${domainNames.length} domain kontrol ediliyor...`);
+      const checked = await checkDomains(domainNames);
 
-      setResults(checked);
+      // Merge reasons and keep only available domains
+      const reasonMap = new Map(suggestions.map((s) => [s.domain, s.reason]));
+      const available = checked
+        .filter((r) => r?.available)
+        .map((r) => ({ ...r, reason: reasonMap.get(r.domain) || "" }));
+
+      setResults(available);
       setStatus("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu.");
@@ -35,8 +42,6 @@ export default function Home() {
       setLoading(false);
     }
   }
-
-  const availableCount = results.filter((r) => r.available).length;
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-16">
@@ -81,9 +86,9 @@ export default function Home() {
       {/* Results Summary */}
       {results.length > 0 && (
         <div className="flex items-center gap-3 mb-4 animate-fade-in">
-          <h2 className="text-xl font-semibold text-slate-800">Sonuçlar</h2>
-          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700">
-            {availableCount}/{results.length} kullanılabilir
+          <h2 className="text-xl font-semibold text-slate-800">Kullanılabilir Domainler</h2>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+            {results.length} adet
           </span>
         </div>
       )}

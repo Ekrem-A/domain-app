@@ -1,4 +1,6 @@
-export async function generateDomains(userPrompt: string): Promise<string[]> {
+import type { DomainSuggestion } from "./types";
+
+export async function generateDomains(userPrompt: string): Promise<DomainSuggestion[]> {
   const res = await fetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

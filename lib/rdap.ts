@@ -1,13 +1,10 @@
-export type DomainResult = {
-  domain: string;
-  available: boolean;
-};
+import type { DomainResult } from "./types";
 
-export async function checkDomains(domains: string[]): Promise<DomainResult[]> {
+export async function checkDomains(domainNames: string[]): Promise<DomainResult[]> {
   const res = await fetch("/api/check", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ domains }),
+    body: JSON.stringify({ domains: domainNames }),
   });
 
   if (!res.ok) {

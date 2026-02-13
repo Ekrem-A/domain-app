@@ -1,9 +1,5 @@
 import DomainItem from "../DomainItem/DomainItem";
-
-type DomainResult = {
-  domain: string;
-  available: boolean;
-};
+import type { DomainResult } from "@/lib/types";
 
 type Props = {
   results: DomainResult[];
@@ -19,6 +15,7 @@ export function DomainList({ results }: Props) {
           key={item.domain}
           domain={item.domain}
           available={item.available}
+          reason={item.reason}
           index={index}
         />
       ))}
