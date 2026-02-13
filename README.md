@@ -1,5 +1,8 @@
 # AI Domain Finder 🚀
 
+
+<img width="715" height="871" alt="image" src="https://github.com/user-attachments/assets/52e4cf31-135f-4349-b534-c00168a61b7b" />
+
 Yapay zeka ile yaratıcı ve markalaşabilir domain isimlerini bulun, ardından RDAP ile müsaitliklerini anında kontrol edin.
 
 ## ✨ Özellikler
