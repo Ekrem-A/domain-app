@@ -27,13 +27,18 @@ export default function Home() {
       setStatus(`${domainNames.length} domain kontrol ediliyor...`);
       const checked = await checkDomains(domainNames);
 
-      // Merge reasons and keep only available domains
+      // Merge reasons with check results (show all domains)
       const reasonMap = new Map(suggestions.map((s) => [s.domain, s.reason]));
-      const available = checked
-        .filter((r) => r?.available)
+      const allDomains = checked
         .map((r) => ({ ...r, reason: reasonMap.get(r.domain) || "" }));
 
-      setResults(available);
+      // Sort: available first, then unavailable
+      allDomains.sort((a, b) => {
+        if (a.available === b.available) return 0;
+        return a.available ? -1 : 1;
+      });
+
+      setResults(allDomains);
       setStatus("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu.");
@@ -86,9 +91,12 @@ export default function Home() {
       {/* Results Summary */}
       {results.length > 0 && (
         <div className="flex items-center gap-3 mb-4 animate-fade-in">
-          <h2 className="text-xl font-semibold text-slate-800">Kullanılabilir Domainler</h2>
+          <h2 className="text-xl font-semibold text-slate-800">Domain Sonuçları</h2>
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
-            {results.length} adet
+            {results.filter((r) => r.available).length} kullanılabilir
+          </span>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-100 text-red-700">
+            {results.filter((r) => !r.available).length} kayıtlı
           </span>
         </div>
       )}
