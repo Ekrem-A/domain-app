@@ -23,6 +23,7 @@ export default function DomainItem({ domain, available, reason, index }: Props) 
   const handleToggleFavorite = () => {
     toggleFavorite(domain);
     setIsFav(!isFav);
+    window.dispatchEvent(new Event("favorites-updated"));
   };
 
   if (!mounted) {
@@ -35,7 +36,9 @@ export default function DomainItem({ domain, available, reason, index }: Props) 
         flex items-center justify-between p-4 rounded-xl bg-white border
         shadow-sm hover:shadow-md transition-all duration-200
         animate-slide-up hover:-translate-y-0.5
-        border-emerald-200 hover:border-emerald-300
+        ${available
+          ? "border-emerald-200 hover:border-emerald-300"
+          : "border-red-200 hover:border-red-300 opacity-75"}
       `}
       style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
     >
@@ -77,9 +80,13 @@ export default function DomainItem({ domain, available, reason, index }: Props) 
         </button>
 
         <span
-          className="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap bg-emerald-50 text-emerald-600 border border-emerald-200"
+          className={`text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap ${
+            available
+              ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+              : "bg-red-50 text-red-600 border border-red-200"
+          }`}
         >
-          Kullanılabilir
+          {available ? "Kullanılabilir" : "Kayıtlı"}
         </span>
       </div>
     </div>

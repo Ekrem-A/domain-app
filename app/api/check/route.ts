@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  RDAP_API_URL,
+  getRdapUrl,
   RDAP_TIMEOUT_MS,
   RDAP_MAX_RETRIES,
   RDAP_RETRY_DELAY_MS,
@@ -22,19 +22,35 @@ async function checkDomainWithRetry(
   attempt: number = 0
 ): Promise<DomainResult> {
   try {
-    const res = await fetch(`${RDAP_API_URL}/${domain}`, {
+    const rdapUrl = getRdapUrl(domain);
+    const res = await fetch(rdapUrl, {
       signal: AbortSignal.timeout(RDAP_TIMEOUT_MS),
     });
 
-    if (res.status === 200) {
-      return { domain, available: false };
-    }
-
+    // 404 = not found in registry = domain is available
     if (res.status === 404) {
       return { domain, available: true };
     }
 
-    return { domain, available: false };
+    // 200 = RDAP returned data, verify it's actual registration JSON
+    if (res.status === 200) {
+      try {
+        const data = await res.json();
+        // Check if the JSON contains real registration data
+        const hasRegistration = data.ldhName || data.unicodeName || (data.events && data.events.length > 0);
+        if (hasRegistration) {
+          return { domain, available: false };
+        }
+        // 200 but no real registration data → treat as available
+        return { domain, available: true };
+      } catch {
+        // 200 but not valid JSON → no registration data → available
+        return { domain, available: true };
+      }
+    }
+
+    // Other status codes → can't confirm registration → available
+    return { domain, available: true };
   } catch (error) {
     // Retry with exponential backoff
     if (attempt < RDAP_MAX_RETRIES) {
@@ -43,8 +59,8 @@ async function checkDomainWithRetry(
       return checkDomainWithRetry(domain, attempt + 1);
     }
 
-    // After max retries, assume unavailable (conservative approach)
-    return { domain, available: false };
+    // After max retries, RDAP couldn't respond → available
+    return { domain, available: true };
   }
 }
 
