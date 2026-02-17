@@ -5,6 +5,7 @@ import { PromptForm } from "@/components";
 import { DomainList } from "@/components";
 import { generateDomains } from "@/lib/gpt";
 import { checkDomains } from "@/lib/rdap";
+import { addSearchHistory } from "@/lib/history";
 import type { DomainResult, DomainSuggestion } from "@/lib/types";
 
 export default function Home() {
@@ -39,6 +40,10 @@ export default function Home() {
       });
 
       setResults(allDomains);
+      
+      // Save to history
+      addSearchHistory(prompt, allDomains);
+      
       setStatus("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu.");
@@ -49,7 +54,7 @@ export default function Home() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-16">
+    <div className="max-w-2xl mx-auto">
       {/* Hero */}
       <div className="text-center mb-10 animate-fade-in">
         <h1 className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-indigo-500 via-violet-500 to-pink-500 bg-clip-text text-transparent">
@@ -103,6 +108,6 @@ export default function Home() {
 
       {/* Domain List */}
       <DomainList results={results} />
-    </main>
+    </div>
   );
 }

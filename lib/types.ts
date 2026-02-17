@@ -30,3 +30,10 @@ export type Favorite = {
   domain: string;
   savedAt: number;
 };
+
+export type SearchHistoryEntry = {
+  id: string;
+  prompt: string;
+  results: DomainResult[];
+  createdAt: number;
+};

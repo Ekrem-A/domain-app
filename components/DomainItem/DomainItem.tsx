@@ -23,6 +23,7 @@ export default function DomainItem({ domain, available, reason, index }: Props) 
   const handleToggleFavorite = () => {
     toggleFavorite(domain);
     setIsFav(!isFav);
+    window.dispatchEvent(new Event("favorites-updated"));
   };
 
   if (!mounted) {
